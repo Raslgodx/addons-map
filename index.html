@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive WoW Map</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .map-container {
+    position: relative;
+    width: 1500px;
+    max-width: 100%;
+    line-height: 0;
+  }
+
+  .map-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Интерактивные зоны */
+  .zone {
+    position: absolute;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    background-color: transparent;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+
+  /* Группа зон — подсветка при наведении на любую из группы */
+  .map-container:not(:has(.zone-group-bcm:hover)) .zone-group-bcm {
+    background-color: transparent;
+    border-color: transparent;
+  }
+
+  .zone-group-bcm:hover,
+  .map-container:has(.zone-group-bcm:hover) .zone-group-bcm {
+    background-color: rgba(255, 220, 50, 0.25);
+    border-color: rgba(255, 220, 50, 0.5);
+    box-shadow: 0 0 15px rgba(255, 220, 50, 0.3);
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: rgba(20, 20, 25, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px 18px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 1000;
+    max-width: 320px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  .tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .tooltip-title {
+    color: #FFD700;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .tooltip-desc {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="map-container" id="mapContainer">
+  <!-- Основное изображение -->
+  <img src="main.jpg" alt="WoW Screenshot" id="mapImage">
+
+  <!-- Зона 1 — вертикальный блок кулдаунов (центр) -->
+  <div class="zone zone-group-bcm" id="zone1"
+       style="left: 47.6%; top: 60.5%; width: 3.5%; height: 20%;">
+  </div>
+
+  <!-- Зона 2 — горизонтальная полоска ниже -->
+  <div class="zone zone-group-bcm" id="zone2"
+       style="left: 42.5%; top: 76%; width: 13.5%; height: 7.5%;">
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tooltipTitle"></div>
+  <div class="tooltip-desc" id="tooltipDesc"></div>
+</div>
+
+<script>
+  const tooltip = document.getElementById('tooltip');
+  const tooltipTitle = document.getElementById('tooltipTitle');
+  const tooltipDesc = document.getElementById('tooltipDesc');
+
+  // Данные подсказок для групп
+  const groupData = {
+    'zone-group-bcm': {
+      title: 'Better Cooldown Manager',
+      desc: 'Аддон для нашего кулдаун менеджера'
+    }
+  };
+
+  // Находим все зоны
+  const zones = document.querySelectorAll('.zone');
+
+  zones.forEach(zone => {
+    zone.addEventListener('mouseenter', (e) => {
+      // Определяем группу
+      const classList = zone.className.split(' ');
+      const groupClass = classList.find(c => c.startsWith('zone-group-'));
+      
+      if (groupClass && groupData[groupClass]) {
+        tooltipTitle.textContent = groupData[groupClass].title;
+        tooltipDesc.textContent = groupData[groupClass].desc;
+      }
+      
+      tooltip.classList.add('visible');
+    });
+
+    zone.addEventListener('mousemove', (e) => {
+      const offsetX = 16;
+      const offsetY = 16;
+      let x = e.clientX + offsetX;
+      let y = e.clientY + offsetY;
+
+      // Не даём tooltip выйти за правый край
+      const tooltipRect = tooltip.getBoundingClientRect();
+      if (x + tooltipRect.width > window.innerWidth) {
+        x = e.clientX - tooltipRect.width - offsetX;
+      }
+      // Не даём выйти за нижний край
+      if (y + tooltipRect.height > window.innerHeight) {
+        y = e.clientY - tooltipRect.height - offsetX;
+      }
+
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    });
+
+    zone.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible');
+    });
+  });
+</script>
+
+</body>
+</html>
